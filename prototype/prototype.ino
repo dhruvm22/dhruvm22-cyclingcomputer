@@ -626,8 +626,8 @@ void buttonsTask(void* pv)                                    //defines button f
 
         if(screen.screenMode == 3) 
         {
-          if(screen.s3Mode == 3) rideData.hlMode = (rideData.hlMode + 1)%5;
-          if(screen.s3Mode == 4 && !rideData.indicator )  rideData.rlMode = (rideData.rlMode + 1)%4;
+          if(screen.s3Mode == 3) rideData.hlMode++;
+          if(screen.s3Mode == 4 && !rideData.indicator )  rideData.rlMode++;
 
           if(screen.s3Mode == 1)
           {
@@ -1090,6 +1090,8 @@ void stravaTask(void* pv)
   WiFi.mode(WIFI_OFF);    // turn off WiFi to save power
   Serial.println("WiFi turned off");
 
+  vTaskDelay(5000 / portTICK_PERIOD_MS);
+
   xTaskCreatePinnedToCore(
     locationTask,
     "LocationTask",
@@ -1250,10 +1252,7 @@ void neoPixelTask(void* pv)              //headlights are also added here althou
         for(int i = 0;i < 16;i++) strip.setPixelColor(i, strip.Color(249 * (int)rideData.rl, 0, 0));
         strip.show();
         break;        
-      case 3:
-
-        // blinkLightCounter = blinkLightCounter - blinkLightCounter % 17
-        
+      case 3:        
         rideData.rl = ( 
             (blinkLightCounter % 9) == 0 || 
             ((blinkLightCounter + 2) % 9) == 0 || 
@@ -1265,6 +1264,11 @@ void neoPixelTask(void* pv)              //headlights are also added here althou
         for(int i = 0;i < 16;i++) strip.setPixelColor(i, strip.Color(249 * (int)rideData.rl, 0, 0));
         strip.show();
         break; 
+
+        default:
+          rideData.rlMode %= 4;
+          break;
+
     }
 
 
@@ -1311,6 +1315,11 @@ void neoPixelTask(void* pv)              //headlights are also added here althou
 
         // blinkLightCounter+=1; blinkLightCounter %= (1000000007);
         break;
+
+      default:
+
+        rideData.hlMode %= 5;
+
  
       //   vTaskDelay(10 / portTICK_PERIOD_MS);
       //   break;        
@@ -1475,59 +1484,6 @@ void readingTask(void *pv)                                                      
         }
 
         
-
-      // int hour = gps.time.hour();
-      // int minute = gps.time.minute();
-      // int second = gps.time.second();
-
-      // // Update date only if valid
-      // if (gps.date.year() != 2000) {
-      //   rideData.day = gps.date.day();
-      //   rideData.month = gps.date.month();
-      //   rideData.year = gps.date.year();
-      // }
-
-      // // Convert UTC → IST (+5:30)
-      // minute += 30;
-      // if (minute >= 60) {
-      //   minute -= 60;
-      //   hour++;
-      // }
-
-      // hour += 5;
-      // if (hour >= 24) {
-      //   hour -= 24;
-
-      //   // move to next day
-      //   rideData.day++;
-
-      //   // handle month/year rollovers
-      //   int daysInMonth;
-      //   if (rideData.month == 1 || rideData.month == 3 || rideData.month == 5 || 
-      //       rideData.month == 7 || rideData.month == 8 || rideData.month == 10 || 
-      //       rideData.month == 12)
-      //     daysInMonth = 31;
-      //   else if (rideData.month == 4 || rideData.month == 6 || 
-      //           rideData.month == 9 || rideData.month == 11)
-      //     daysInMonth = 30;
-      //   else {
-      //     // February
-      //     bool leap = (rideData.year % 4 == 0 && (rideData.year % 100 != 0 || rideData.year % 400 == 0));
-      //     daysInMonth = leap ? 29 : 28;
-      //   }
-
-      //   if (rideData.day > daysInMonth) {
-      //     rideData.day = 1;
-      //     rideData.month++;
-      //     if (rideData.month > 12) {
-      //       rideData.month = 1;
-      //       rideData.year++;
-      //     }
-      //   }
-      // }
-
-      // rideData.hour = hour;
-      // rideData.minute = minute;
 
 
         rideData.utf_time = String(rideData.year) + "-" +
@@ -1728,7 +1684,7 @@ void locationTask(void* pv)
 
             lines_read++;
 
-            if(lines_read >= 100) 
+            if(lines_read >= 500) 
             { 
               size_t curr_pos = file.position();
               
@@ -1745,6 +1701,7 @@ void locationTask(void* pv)
               { 
                 file = SD.open("/p7_sorted.csv"); 
                 file.seek(curr_pos); 
+                Serial.println("gps got mutex after line read");
               } 
             
             }
@@ -1824,6 +1781,8 @@ void memTask(void *pv)
       String target = writeToA ? "/updateLogs/latestA.csv" : "/updateLogs/latestB.csv";
       String backup = writeToA ? "/updateLogs/latestB.csv" : "/updateLogs/latestA.csv";
 
+      Serial.println("mem task got mtuex");
+
 
       File f = SD.open(target, FILE_WRITE);
       if (f)
@@ -1895,6 +1854,8 @@ void setup() {
       f.print("Restart reason code: ");
       f.println((int)reason);   // prints the numeric reset reason
       f.close();
+      Serial.print("restart reason ");
+      Serial.println((int)reason);
     }
   }
 
