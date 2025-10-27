@@ -280,7 +280,7 @@ void displayTask(void *pv)
 
 
       // blinkCounter++;
-      if (indCounter == 0) {
+      if (indCounter % 4== 0) {
         if (ind == -1) {
           // right
           u8g2.drawTriangle(124, 20, 124, 35, 119, 28);
@@ -418,7 +418,11 @@ void displayTask(void *pv)
       }
 
 
-      if (indCounter == 0) {
+
+
+
+
+      if (indCounter % 4 == 0) {
         if (ind == -1) {
           u8g2.drawTriangle(124, 20, 124, 35, 119, 28);
         } else if (ind == 1) {
@@ -1152,7 +1156,7 @@ void gpxLoggingTask(void* pvParameters)
             timeNew = rideData.utf_time;
             if(timeOld != timeNew)
             {
-              Serial.println("logger got mutex");
+              // Serial.println("logger got mutex");
 
 
 
@@ -1176,24 +1180,6 @@ void gpxLoggingTask(void* pvParameters)
               }
 
 
-
-
-
-                            // log GPS point, speed, time etc.
-              // rideFile.print("<trkpt lat=\"");
-              // rideFile.print(rideData.lattitude,6);
-              // rideFile.print("\" lon=\"");
-              // rideFile.print(rideData.longitude,6);
-              // rideFile.print("\">");
-              // // rideFile.print("\"><ele>");
-              // // rideFile.print(rideData.elevation,2);
-              // // rideFile.print("</ele><time>");
-              // rideFile.print("<time>");
-              // rideFile.print(timeNew);
-              // rideFile.println("</time></trkpt>");
-              // rideFile.flush();
-              // timeOld = timeNew;
-
             }
 
         }
@@ -1209,7 +1195,7 @@ void gpxLoggingTask(void* pvParameters)
     if (xSemaphoreTake(sdMutex, portMAX_DELAY))
     {
 
-        Serial.println("logger got mutex");
+        Serial.println("logger got mutex to end task");
         // rideFile.println("</trkseg></trk></gpx>"); added in upload
         rideFile.close();
         xSemaphoreGive(sdMutex);
@@ -1251,24 +1237,27 @@ void neoPixelTask(void* pv)              //headlights are also added here althou
         // blinkLightCounter+=1; blinkLightCounter %= (100000007);
         for(int i = 0;i < 16;i++) strip.setPixelColor(i, strip.Color(249 * (int)rideData.rl, 0, 0));
         strip.show();
-        break;        
-      case 3:        
-        rideData.rl = ( 
-            (blinkLightCounter % 9) == 0 || 
-            ((blinkLightCounter + 2) % 9) == 0 || 
-            ((blinkLightCounter + 4) % 9) == 0 ||
-            ((blinkLightCounter + 6) % 9) == 0 
-          ) ? !rideData.rl : rideData.rl;
+        break;     
 
-        // blinkLightCounter+=1; blinkLightCounter %= (100000007);
+      case 3:        
+        if((blinkLightCounter % 4) == 0 || ((blinkLightCounter - 2) % 4 == 0)) rideData.rl = 1;
+        else rideData.rl = 0;
+        for(int i = 0;i < 16;i++) strip.setPixelColor(i, strip.Color(249 * (int)rideData.rl, 0, 0));
+        strip.show();
+        break;    
+
+      case 4:        
+        if((blinkLightCounter % 10) == 0 || ((blinkLightCounter - 2) % 10 == 0)) rideData.rl = 1;
+        else rideData.rl = 0;
         for(int i = 0;i < 16;i++) strip.setPixelColor(i, strip.Color(249 * (int)rideData.rl, 0, 0));
         strip.show();
         break; 
 
-        default:
-          rideData.rlMode %= 4;
-          break;
+      
 
+      default:
+        rideData.rlMode %= 5;
+        break;
     }
 
 
@@ -1278,62 +1267,50 @@ void neoPixelTask(void* pv)              //headlights are also added here althou
       rideData.location = "low battery :(";
     }
 
-    // Serial.println(rideData.hlMode);
     switch(rideData.hlMode)
     {
       case 0:
         rideData.hlh = 0;
         rideData.hll = 0;
-        digitalWrite(33, rideData.hlh);
-        digitalWrite(13, rideData.hll);
         break;
       case 1:
         rideData.hlh = 1;
         rideData.hll = 0;
-        digitalWrite(33, rideData.hlh);
-        digitalWrite(13, rideData.hll);
         break;
       case 2:
         rideData.hlh = 0;
         rideData.hll = 1;
-        digitalWrite(33, rideData.hlh);
-        digitalWrite(13, rideData.hll);
         break;
       case 3:
         rideData.hlh = 1;
         rideData.hll = 1;
-        digitalWrite(33, rideData.hlh);
-        digitalWrite(13, rideData.hll);
         break;
 
       case 4:
-        rideData.hlh = ((blinkLightCounter % 3) == 0)? !rideData.hlh : rideData.hlh;
+        if((blinkLightCounter % 10) == 0 || ((blinkLightCounter - 2) % 10 == 0)) rideData.hlh = 1;
+        else rideData.hlh = 0;
         rideData.hll = 0;
-
-        digitalWrite(33, rideData.hlh);
-        digitalWrite(13, rideData.hll);
-
-        // blinkLightCounter+=1; blinkLightCounter %= (1000000007);
         break;
+
+      case 5:
+
+        rideData.hll = 1;
+        if(blinkLightCounter % 6 == 0) rideData.hlh = 1;
+        else rideData.hlh = 0;
 
       default:
 
-        rideData.hlMode %= 5;
+        rideData.hlMode %= 6;
 
- 
-      //   vTaskDelay(10 / portTICK_PERIOD_MS);
-      //   break;        
-      // case 5:
-      //   rideData.hl = (((blinkLightCounter % 50) == 0) || (((blinkLightCounter + 10) % 50) == 0))? !rideData.rl : rideData.rl;
-      //   blinkLightCounter+=1; blinkLightCounter %= (1000000007);
-      //   vTaskDelay(10 / portTICK_PERIOD_MS);
-      //   break; 
     }
+
+    digitalWrite(33, rideData.hlh);
+    digitalWrite(13, rideData.hll);
 
 
     if (rideData.indicator == -1) 
     {  
-      if(indCounter == 0) strip.clear();
+      if(indCounter % 4 == 0) strip.clear();
 
       for(int i = 0;i <= indCounter;i++)
       {
@@ -1352,7 +1329,7 @@ void neoPixelTask(void* pv)              //headlights are also added here althou
     } 
     else if (rideData.indicator == 1) 
     {  
-      if(indCounter == 0) strip.clear();
+      if(indCounter % 4 == 0) strip.clear();
       for(int i = 0;i <= indCounter;i++)
       {
         strip.setPixelColor((7-i), strip.Color(50,0,0)); 
@@ -1612,7 +1589,7 @@ void locationTask(void* pv)
         }
         
 
-        Serial.println("gps got mutex");
+        // Serial.println("gps got mutex");
         File file = SD.open("/p7_sorted.csv");
 
         if(file){
@@ -1701,7 +1678,7 @@ void locationTask(void* pv)
               { 
                 file = SD.open("/p7_sorted.csv"); 
                 file.seek(curr_pos); 
-                Serial.println("gps got mutex after line read");
+                // Serial.println("gps got mutex after line read");
               } 
             
             }
@@ -1781,7 +1758,7 @@ void memTask(void *pv)
       String target = writeToA ? "/updateLogs/latestA.csv" : "/updateLogs/latestB.csv";
       String backup = writeToA ? "/updateLogs/latestB.csv" : "/updateLogs/latestA.csv";
 
-      Serial.println("mem task got mtuex");
+      // Serial.println("mem task got mtuex");
 
 
       File f = SD.open(target, FILE_WRITE);
@@ -1846,6 +1823,7 @@ void setup() {
   if(sd)
   {
     esp_reset_reason_t reason = esp_reset_reason();
+
 
     if (!SD.exists("/crashLogs")) SD.mkdir("/crashLogs");
 
