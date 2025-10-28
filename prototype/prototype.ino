@@ -1555,15 +1555,13 @@ void readingTask(void *pv)                                                      
 void locationTask(void* pv)
 {
 
-  // delay(15000);
-  // rideData.hour = 69;                   //from gps
-  // rideData.minute = 69;                 //from gps
+
   rideData.location = "location not available";
 
   Serial.println("location task active");
 
   uint32_t lastClosestPos = 0;
-  const uint32_t WINDOW_BYTES = 2000*45;
+  const uint32_t WINDOW_BYTES = 4000*45;
 
 
   double minDist = 1e15;
@@ -1605,7 +1603,6 @@ void locationTask(void* pv)
           file.readStringUntil('\n');    // headers
 
           String minName = "";
-          int k = 0;
 
 
 
@@ -1663,7 +1660,7 @@ void locationTask(void* pv)
             if(d < 30) break;
 
             
-            if(k++ % 100 == 0) vTaskDelay(1 / portTICK_PERIOD_MS); // yield to watchdog
+            if(lines_read++ % 100 == 0) vTaskDelay(1 / portTICK_PERIOD_MS); // yield to watchdog
 
 
             lines_read++;
@@ -1705,7 +1702,7 @@ void locationTask(void* pv)
       }
 
         xSemaphoreGive(sdMutex); // unlock SD
-        vTaskDelay(5000 / portTICK_PERIOD_MS);  // ~20 FPS
+        vTaskDelay(1000 / portTICK_PERIOD_MS);  // ~20 FPS
 
   }
 }
