@@ -1158,8 +1158,6 @@ void gpxLoggingTask(void* pvParameters)
             {
               // Serial.println("logger got mutex");
 
-
-
               char latStr[12];
               char lonStr[12];
               dtostrf(rideData.lattitude, 0, 6, latStr);  
@@ -1462,23 +1460,32 @@ void readingTask(void *pv)                                                      
 
         
 
+        if (rideData.year >= 2025 &&
+            rideData.month >= 1 && rideData.month <= 12 &&
+            rideData.day >= 1 && rideData.day <= 31 &&
+            hour >= 0 && hour <= 23 &&
+            minute >= 0 && minute <= 59 &&
+            second >= 0 && second <= 59)
+        {
+            rideData.utf_time = String(rideData.year) + "-" +
+                      (rideData.month < 10 ? "0" : "") + String(rideData.month) + "-" +
+                      (rideData.day < 10 ? "0" : "") + String(rideData.day) + "T" +
+                      (hour < 10 ? "0" : "") + String(hour) + ":" +
+                      (minute < 10 ? "0" : "") + String(minute) + ":" +
+                      (second < 10 ? "0" : "") + String(second) + "Z";
 
-        rideData.utf_time = String(rideData.year) + "-" +
-                  (rideData.month < 10 ? "0" : "") + String(rideData.month) + "-" +
-                  (rideData.day < 10 ? "0" : "") + String(rideData.day) + "T" +
-                  (hour < 10 ? "0" : "") + String(hour) + ":" +
-                  (minute < 10 ? "0" : "") + String(minute) + ":" +
-                  (second < 10 ? "0" : "") + String(second) + "Z";
+            minute += 30;
+            if (minute >= 60) {
+              minute -= 60;
+              hour++;
+            }
+            hour += 5;
 
-        minute += 30;
-        if (minute >= 60) {
-          minute -= 60;
-          hour++;
+            rideData.hour = hour;
+            rideData.minute = minute;
         }
-        hour += 5;
 
-        rideData.hour = hour;
-        rideData.minute = minute;
+
 
 
       }
@@ -1711,48 +1718,7 @@ void memTask(void *pv)
   bool writeToA = 1;
   while(1)
   {
-    // if(xSemaphoreTake(sdMutex, portMAX_DELAY))
-    // {
-    //   Serial.println("mem task got mutex");
-
-    //   SD.remove("/latestlogs.tmp");
-    //   File f = SD.open("/latestlogs.tmp", FILE_WRITE);
-    //   if (f) {
-
-    //     // Serial.println("writing");
-    //     // f.seek(0); // overwrite existing file
-    //     f.println(rideData.odo);
-    //     f.println(rideData.distance);
-    //     f.println(rideData.time_r);
-    //     f.println(rideData.avg_speed);
-    //     f.println(rideData.max_speed);
-    //     f.println(rideData.at_max_speed);
-
-    //     f.println(rideData.ride);    // 0 or 1
-    //     f.println(rideData.day);
-    //     f.println(rideData.month);
-    //     f.println(rideData.year);
-    //     f.println(rideData.rpause);  // 0 or 1
-    //     f.println(rideData.start_time);
-    //     f.println(rideData.elevation);
-    //     // f.flush();
-    //     f.close();
-
-    //     // SD.remove("/latestlogs.csv");
-    //     SD.rename("/latestlogs.csv", "/latestlogstmp.csv");
-    //     SD.rename("/latestlogs.tmp", "/latestlogs.csv");
-    //     SD.remove("/latestlogstmp.csv");
-    //   }
-
-    //   else
-    //   {
-    //     rideData.location = "SD Write Error!";
-    //   }
-
-    //   xSemaphoreGive(sdMutex);
-
-    // }
-
+   
     if (xSemaphoreTake(sdMutex, portMAX_DELAY))
     {
       String target = writeToA ? "/updateLogs/latestA.csv" : "/updateLogs/latestB.csv";
