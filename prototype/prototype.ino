@@ -1184,7 +1184,7 @@ void gpxLoggingTask(void* pvParameters)
         xSemaphoreGive(sdMutex);
 
 
-        vTaskDelay(1050 / portTICK_PERIOD_MS); // log at 0.2 Hz (every 5s) //mutex takes care that it doesnt log too fast so no need to add it 
+        vTaskDelay(1050 / portTICK_PERIOD_MS);
     }
 
 
@@ -1484,27 +1484,22 @@ void readingTask(void *pv)                                                      
             rideData.hour = hour;
             rideData.minute = minute;
         }
-
-
-
-
       }
-
-
-
-      // if(gps.altitude.isUpdated() && gps.altitude.isValid())
-      // {
-      //   rideData.elevation = gps.altitude.meters();
-      // }
 
       
       if(gps.location.isUpdated() && gps.location.isValid())
       {
-        rideData.lattitude = gps.location.lat();
-        rideData.longitude = gps.location.lng();
+        double lat = gps.location.lat();
+        double lng = gps.location.lng();
+
+        if(lat < 30 && lat > 10 && lng < 90 && lat > 70)
+        {
+          rideData.lattitude = lat;
+          rideData.longitude = lng;
+        }
       }
 
-      if(gps.location.isValid() && gps.time.isValid() && rideData.utf_time != "")
+      if(rideData.lattitude != 0 && rideData.utf_time != "")
       {
         rideData.isGPS = 1;
         
@@ -1982,12 +1977,6 @@ void setup() {
   if(rideData.ride) screen.screenMode = 2;
 
 
-    // rideData.odo = 6000;                    // total odometer, 0 on first run
-    // rideData.distance = 0;               // distance for current ride, 0
-    // rideData.time_r = 0;                 // ride time, 0
-    // rideData.avg_speed = 0;              // average speed, 0
-    // rideData.max_speed = 0;              // max speed, 0
-
     rideData.speed = 0;                  // current speed, 0
 
 
@@ -2078,15 +2067,6 @@ void setup() {
     0
   );
 
-  // xTaskCreatePinnedToCore(
-  //   locationTask,
-  //   "LocationTask",
-  //   4096,
-  //   nullptr,
-  //   1,
-  //   &locationTaskHandle,
-  //   1
-  // );
 
 
   xTaskCreatePinnedToCore(
