@@ -1492,7 +1492,8 @@ void readingTask(void *pv)                                                      
         double lat = gps.location.lat();
         double lng = gps.location.lng();
 
-        if(lat < 30 && lat > 10 && lng < 90 && lat > 70)
+
+        if(lat < 30 && lat > 10 && lng < 90 && lng > 70)
         {
           rideData.lattitude = lat;
           rideData.longitude = lng;
@@ -1502,6 +1503,7 @@ void readingTask(void *pv)                                                      
       if(rideData.lattitude != 0 && rideData.utf_time != "")
       {
         rideData.isGPS = 1;
+        
         
         if(rideData.ride == 1 && gpxLoggingTaskHandle == NULL)
         {
@@ -1521,10 +1523,17 @@ void readingTask(void *pv)                                                      
 
       }
 
+
+
       else if(gps.location.age() < 4000)
       {
         rideData.isGPS = 0;
       }
+
+      // Serial.println(rideData.lattitude);
+      // Serial.println(rideData.longitude);
+      // Serial.println(rideData.utf_time);
+      // Serial.println(rideData.isGPS);
 
     }
 
