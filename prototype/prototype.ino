@@ -25,7 +25,7 @@ TinyGPSPlus gps;
 
 // === NeoPixel Setup ===
 #define LED_PIN   2      // Pin where NeoPixel is connected
-Adafruit_NeoPixel strip(24, LED_PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip(8, LED_PIN, NEO_GRB + NEO_KHZ800);
 
 
 
@@ -280,12 +280,10 @@ void displayTask(void *pv)
 
 
       // blinkCounter++;
-      if (indCounter % 4== 0) {
+      if ((int)rideData.indicator * (int)rideData.rl != 0) {
         if (ind == -1) {
-          // right
           u8g2.drawTriangle(124, 20, 124, 35, 119, 28);
         } else if (ind == 1) {
-          // left (same location, pointing left)
           u8g2.drawTriangle(119, 20, 119, 35, 124, 28);
         }
       }
@@ -422,7 +420,7 @@ void displayTask(void *pv)
 
 
 
-      if (indCounter % 4 == 0) {
+      if ((int)rideData.indicator * (int)rideData.rl != 0) {
         if (ind == -1) {
           u8g2.drawTriangle(124, 20, 124, 35, 119, 28);
         } else if (ind == 1) {
@@ -1306,50 +1304,41 @@ void neoPixelTask(void* pv)              //headlights are also added here althou
     digitalWrite(13, rideData.hll);
 
 
-    if (rideData.indicator == -1) 
+    if (rideData.indicator == 1) 
     {  
-      if(indCounter % 4 == 0) strip.clear();
 
-      for(int i = 0;i <= indCounter;i++)
-      {
-        strip.setPixelColor(i,strip.Color(50,0,0));
-        strip.setPixelColor(8+i, strip.Color(50 ,0,0));
-        // strip.setPixelColor(16+i, strip.Color(50 ,0,0));
 
-      }
-      strip.setPixelColor(indCounter,strip.Color(249,96,0));
-      strip.setPixelColor(8+indCounter, strip.Color(249 ,96,0));
-      // strip.setPixelColor(16+indCounter, strip.Color(249 ,96,0));
+      if((blinkLightCounter % 4) == 0 || ((blinkLightCounter - 2) % 4 == 0)) rideData.rl = 1;
+      else rideData.rl = 0;
+      for(int i = 0;i < 8;i++) strip.setPixelColor(i, strip.Color(100, 0, 0));
+
+      strip.setPixelColor(2, strip.Color(249 * (int)rideData.rl,96 * (int)rideData.rl,0));
+      strip.setPixelColor(3, strip.Color(249 * (int)rideData.rl,96 * (int)rideData.rl,0));
+
 
       strip.show();
-      indCounter++; indCounter %=8;
+
+
+
  
     } 
-    else if (rideData.indicator == 1) 
+    else if (rideData.indicator == -1) 
     {  
-      if(indCounter % 4 == 0) strip.clear();
-      for(int i = 0;i <= indCounter;i++)
-      {
-        strip.setPixelColor((7-i), strip.Color(50,0,0)); 
-        strip.setPixelColor((15-i), strip.Color(50,0,0));
-        // strip.setPixelColor((23-i), strip.Color(50,0,0));
 
-      }
-      strip.setPixelColor((7-indCounter), strip.Color(249,96,0)); 
-      strip.setPixelColor((15-indCounter), strip.Color(249,96,0));
-      // strip.setPixelColor((23-indCounter), strip.Color(249,96,0));
+      if((blinkLightCounter % 4) == 0 || ((blinkLightCounter - 2) % 4 == 0)) rideData.rl = 1;
+      else rideData.rl = 0;
+      for(int i = 0;i < 8;i++) strip.setPixelColor(i, strip.Color(100, 0, 0));
 
+      strip.setPixelColor(6, strip.Color(249 * (int)rideData.rl,96 * (int)rideData.rl,0));
+      strip.setPixelColor(7, strip.Color(249 * (int)rideData.rl,96 * (int)rideData.rl,0));
 
-      strip.show();    
-      indCounter++; indCounter %=8;
+      strip.show();
     } 
 
     blinkLightCounter+=1; blinkLightCounter %= (100000007);
 
     vTaskDelay(200 / portTICK_PERIOD_MS);  // ~20 FPS
     strip.clear();
-    // digitalWrite(33, 0);
-    // digitalWrite(13, 0);
 
   }
 }
@@ -2122,7 +2111,7 @@ void setup() {
       nullptr,
       1,
       &locationTaskHandle,
-      1
+      0
     );
 
   }
